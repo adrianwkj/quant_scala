@@ -14,7 +14,11 @@ object Main {
 
   val db = Database.forConfig("mydb")
 
-  val stocks = TableQuery[Stocks].filter(_.symbol === "000729")
+  val symbol = "601668"
+
+  val circle = "Day"
+
+  val stocks = TableQuery[Stocks].filter(_.symbol === symbol)
 
   val resultFuture = db.run(stocks.result)
 
@@ -91,8 +95,8 @@ object Main {
 
     val pointList = stockList.map{
       x =>
-        if(x.shape == top) Point(x.trade_date, x.high)
-        else if (x.shape == bottom) Point(x.trade_date, x.low)
+        if(x.shape == top) Point(x.id, x.trade_date, x.high)
+        else if (x.shape == bottom) Point(x.id, x.trade_date, x.low)
         else null
     }
 
@@ -104,11 +108,23 @@ object Main {
 
     strokeList.foreach(x => println(x + x.direction.toString))
 
-    for(i <- 3 until strokeList.length) {
-      val middleCenter = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i))
-      val middleRange = middleCenter.middleRange
-      if(middleRange.isDefined) println(middleCenter)
+    val strokes = TableQuery[Strokes]
+    val toBeInsertedStrokes = strokeList.map{
+      x => StrokeData(0, symbol, circle, x.startPoint.trade_datetime, x.startPoint.price)
+    }.map {
+      row => strokes.insertOrUpdate(row)
     }
+    val dbioFuture = db.run(DBIO.sequence(toBeInsertedStrokes.toSeq))
+    val rowsInserted = Await.result(dbioFuture, Duration.Inf).sum
+    println(rowsInserted)
+
+
+
+//    for(i <- 3 until strokeList.length) {
+//      val middleCenter = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i))
+//      val middleRange = middleCenter.middleRange
+//      if(middleRange.isDefined) println(middleCenter)
+//    }
   }
 
 
