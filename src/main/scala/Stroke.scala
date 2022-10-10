@@ -24,7 +24,13 @@ object Stroke {
 //sealed trait point
 case class Point(stockId: Int, trade_datetime: Timestamp, price: Float)
 
-case class PriceRange(lowPrice: Float, highPrice: Float)
+case class PriceRange(lowPrice: Float, highPrice: Float) {
+
+  def ifOverlap(pr: PriceRange): Boolean = {
+    if(lowPrice <= pr.highPrice && highPrice >= pr.lowPrice) true
+    else false
+  }
+}
 
 object PriceRange {
 

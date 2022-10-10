@@ -2,48 +2,48 @@ package org.peter.quant
 
 import scala.math._
 
-case class MiddleCenter(one: Stroke, two: Stroke, three: Stroke) {
+case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke) {
 
   import MiddleCenter._
 
-  val middleRange = priceIntersection(one, two, three)
-  val maxRange = priceDrift(one, two, three)
+  val middleRange = priceIntersection(first, second, third)
+  val maxRange = priceDrift(first, second, third)
 }
 
 object MiddleCenter {
 
-  def priceIntersection(one: Stroke, two: Stroke, three: Stroke): Option[PriceRange] = {
-    val oneRange = one.getPriceRange
-    val twoRange = two.getPriceRange
-    val threeRange = three.getPriceRange
-    val oneRangetwo = rangeMerge(oneRange, twoRange)
-    if (oneRangetwo.isEmpty) None
-    else rangeMerge(oneRangetwo.get, threeRange)
+  def priceIntersection(first: Stroke, second: Stroke, third: Stroke): Option[PriceRange] = {
+    val firstRange = first.getPriceRange
+    val secondRange = second.getPriceRange
+    val thirdRange = third.getPriceRange
+    val firstRangesecond = rangeMerge(firstRange, secondRange)
+    if (firstRangesecond.isEmpty) None
+    else rangeMerge(firstRangesecond.get, thirdRange)
   }
 
-  def priceDrift(one: Stroke, two: Stroke, three: Stroke): Option[PriceRange] = {
-    val oneRange = one.getPriceRange
-    val twoRange = two.getPriceRange
-    val threeRange = three.getPriceRange
-    val oneRangetwo = rangeUnion(oneRange, twoRange)
-    if (oneRangetwo.isEmpty) None
-    else rangeUnion(oneRangetwo.get, threeRange)
+  def priceDrift(first: Stroke, second: Stroke, third: Stroke): Option[PriceRange] = {
+    val firstRange = first.getPriceRange
+    val secondRange = second.getPriceRange
+    val thirdRange = third.getPriceRange
+    val firstRangeSecond = rangeUnion(firstRange, secondRange)
+    if (firstRangeSecond.isEmpty) None
+    else rangeUnion(firstRangeSecond.get, thirdRange)
   }
 
-  def prepareCheck(one: Stroke, two: Stroke, three: Stroke): Boolean = {
-    if (one.endPoint == two.startPoint && two.endPoint == three.startPoint) true
+  def prepareCheck(first: Stroke, second: Stroke, third: Stroke): Boolean = {
+    if (first.endPoint == second.startPoint && second.endPoint == third.startPoint) true
     else false
   }
 
-  private def rangeMerge(one: PriceRange, two: PriceRange): Option[PriceRange] = {
-    if (one.lowPrice <= two.highPrice && one.highPrice >= two.lowPrice) {
-      Some(PriceRange(max(one.lowPrice, two.lowPrice), min(one.highPrice, two.highPrice)))
+  private def rangeMerge(first: PriceRange, second: PriceRange): Option[PriceRange] = {
+    if (first.lowPrice <= second.highPrice && first.highPrice >= second.lowPrice) {
+      Some(PriceRange(max(first.lowPrice, second.lowPrice), min(first.highPrice, second.highPrice)))
     } else None
   }
 
-  private def rangeUnion(one: PriceRange, two: PriceRange): Option[PriceRange] = {
-    if (one.lowPrice <= two.highPrice && one.highPrice >= two.lowPrice) {
-      Some(PriceRange(min(one.lowPrice, two.lowPrice), max(one.highPrice, two.highPrice)))
+  private def rangeUnion(first: PriceRange, second: PriceRange): Option[PriceRange] = {
+    if (first.lowPrice <= second.highPrice && first.highPrice >= second.lowPrice) {
+      Some(PriceRange(min(first.lowPrice, second.lowPrice), max(first.highPrice, second.highPrice)))
     } else None
   }
 }

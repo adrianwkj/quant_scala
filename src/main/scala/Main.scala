@@ -120,13 +120,27 @@ object Main {
 
 
 
-//    for(i <- 3 until strokeList.length) {
-//      val middleCenter = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i))
-//      val middleRange = middleCenter.middleRange
-//      if(middleRange.isDefined) println(middleCenter)
-//    }
-  }
+    val middleCenterList = ListBuffer[MiddleCenter]()
+    for(i <- 3 until strokeList.length) {
+      val mc = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i))
+      val middleRange = mc.middleRange
 
+      if(middleCenterList.isEmpty) {
+        if (middleRange.isDefined) {
+          middleCenterList.addOne(mc)
+          println("first middle center: " + mc)
+        }
+      } else {
+        val lastMC = middleCenterList.last
+        if(middleRange.get.ifOverlap(lastMC.middleRange.get)) {
+
+        } else {
+          if(mc.first.direction == lastMC.first.direction && )
+          println(strokeList(i))
+        }
+      }
+    }
+  }
 
 }
 
