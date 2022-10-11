@@ -118,28 +118,79 @@ object Main {
     val rowsInserted = Await.result(dbioFuture, Duration.Inf).sum
     println(rowsInserted)
 
+    val mcList = identifyMC(strokeList.toList, List[MiddleCenter]())
+
+    print(mcList)
 
 
-    val middleCenterList = ListBuffer[MiddleCenter]()
-    for(i <- 3 until strokeList.length) {
-      val mc = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i))
-      val middleRange = mc.middleRange
+//    val middleCenterList = ListBuffer[MiddleCenter]()
+//    // ignore top 2 stroke
+//    for(i <- 2 until strokeList.length) {
+//      val mc = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i), List[Stroke]())
+//      val middleRange = mc.middleRange
+//
+//      // first mc insert
+//      if(middleCenterList.isEmpty) {
+//        if (middleRange.isDefined) {
+//          middleCenterList.addOne(mc)
+//          println("first middle center: " + mc)
+//        }
+//      } else {
+//        val lastMC = middleCenterList.last
+//
+//        if(strokeList(i).getPriceRange.ifOverlap(lastMC.middleRange.get)) { // stroke with range in the mc
+//          val restStroke = mc.extendStroke.appended(strokeList(i))
+//          val newMC = lastMC.copy(extendStroke = restStroke)
+//          middleCenterList -= lastMC
+//          middleCenterList.addOne(newMC)
+//        } else { // stroke away from last mc,first is the 3rd buy/sell point
+//          if(mc.first.direction == lastMC.first.direction )
+//          println(strokeList(i))
+//        }
+//      }
+//    }
+  }
 
-      if(middleCenterList.isEmpty) {
-        if (middleRange.isDefined) {
-          middleCenterList.addOne(mc)
-          println("first middle center: " + mc)
-        }
-      } else {
-        val lastMC = middleCenterList.last
-        if(middleRange.get.ifOverlap(lastMC.middleRange.get)) {
+  def identifyMC(strokeList: List[Stroke], mcList: List[MiddleCenter]): List[MiddleCenter] = {
 
-        } else {
-          if(mc.first.direction == lastMC.first.direction && )
-          println(strokeList(i))
+    if (mcList.isEmpty) {
+      for(i <- 2 until strokeList.length) {
+        val mc = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i), List[Stroke]())
+        val middleRange = mc.middleRange
+
+        if(middleRange.isDefined) {
+          identifyMC(strokeList.drop(i + 1), List(mc))
         }
       }
+      mcList
+
+    } else {
+      val lastMC = mcList.last
+
+      for(i <- strokeList.indices) {
+        val currentStroke = strokeList(i)
+        if(i == 0 && currentStroke.getPriceRange.ifOverlap(lastMC.middleRange.get)) {
+          val extendStroke = lastMC.extendStroke.appended(currentStroke)
+          val newMC = lastMC.copy(extendStroke = extendStroke)
+          identifyMC(strokeList.drop(1), List(newMC))
+        } else {
+          if(i != 0 && i != 1) {
+            val mc = MiddleCenter(strokeList(i - 2), strokeList(i - 1), strokeList(i), List[Stroke]())
+            val middleRange = mc.middleRange
+
+            if(middleRange.isDefined) {
+              val newMCList = mcList.appended(mc)
+              identifyMC(strokeList.drop(i + 1), newMCList)
+            }
+          }
+        }
+      }
+
+      mcList
     }
+
+
+
   }
 
 }

@@ -1,8 +1,9 @@
 package org.peter.quant
 
+import scala.collection.mutable.ListBuffer
 import scala.math._
 
-case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke) {
+case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStroke: List[Stroke]) {
 
   import MiddleCenter._
 

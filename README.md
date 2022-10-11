@@ -14,3 +14,10 @@ F --Y--> G[Check Current CandleStick Higher Or Lower Than The Last]
 G --top and higher or bottom and lower--> H[Change Last Shape To Relay And Replace Last CandleStick In The Final List]
 G --top and lower or bottom and higher--> I[Change Current Shape To Relay]
 ```
+
+* identify middle center
+
+```mermaid
+graph TB
+Start --> B
+```
