@@ -59,3 +59,21 @@ class Strokes(tag: Tag) extends Table[StrokeData](tag, "stroke") {
 
   def * = (id, symbol, circle, trade_date, price) <> ((StrokeData.apply _).tupled, StrokeData.unapply)
 }
+
+case class PointData(id: Int, symbol: String, circle: String, trade_time: Timestamp, price: Float, bid_ask: String)
+
+class Points(tag: Tag) extends Table[PointData](tag, "point") {
+  def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
+
+  def symbol = column[String]("symbol")
+
+  def circle = column[String]("circle")
+
+  def trade_time = column[Timestamp]("trade_time")
+
+  def price = column[Float]("price")
+
+  def bid_ask = column[String]("bid_ask")
+
+  def * = (id, symbol, circle, trade_time, price, bid_ask) <> ((PointData.apply _).tupled, PointData.unapply)
+}

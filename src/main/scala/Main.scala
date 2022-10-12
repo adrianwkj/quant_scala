@@ -9,15 +9,13 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Success
 
 
 object Main {
 
   val db = Database.forConfig("mydb")
 
-  val symbol = "601668"
+  val symbol = "000729"
 
   val circle = "Day"
 
@@ -117,7 +115,7 @@ object Main {
     }
     println("strokeList length: " + strokeList.length)
 
-    strokeList.foreach(x => println(x + x.direction.toString))
+//    strokeList.foreach(x => println(x + x.direction.toString))
 
     val strokes = TableQuery[Strokes]
     val strokesDeleteAction = strokes.filter(_.symbol === symbol).filter(x => x.trade_date >= start_time && x.trade_date <= end_time).delete
@@ -148,18 +146,35 @@ object Main {
     val mcRowsAffected = Await.result(mcDbioFuture, Duration.Inf).sum
     println("middle centers inserted: " + mcRowsAffected)
 
-    val bid = mcList.map {
+    val bidAskPoints = mcList.map {
       mc =>
         if (mc.extendStroke.isEmpty) {
           val index = strokeList.indexOf(mc.third)
-          strokeList(index + 1).endPoint
+          val s = strokeList(index + 1)
+          if(s.direction == up) (s.endPoint, "v")
+          else (s.endPoint, "^")
         } else {
           val index = strokeList.indexOf(mc.extendStroke.last)
-          strokeList(index + 1).endPoint
+          val s = strokeList(index + 1)
+          if(s.direction == up) (s.endPoint, "v")
+          else (s.endPoint, "^")
         }
     }
 
-    bid.foreach(println)
+
+    val points = TableQuery[Points]
+    val pointsDeleteAction = points.filter(_.symbol === symbol).filter(x => x.trade_time >= start_time && x.trade_time <= end_time).delete
+    val toBeInsertedPoints = bidAskPoints.map {
+      point =>
+        PointData(0, symbol, circle, point._1.trade_datetime, point._1.price, point._2)
+    }.map {
+      row => points.insertOrUpdate(row)
+    }
+    val pointsInsertAction = DBIO.sequence(toBeInsertedPoints)
+    val pointsDBIOFuture = db.run(pointsDeleteAction andThen(pointsInsertAction))
+    val pointsRowsAffected = Await.result(pointsDBIOFuture, Duration.Inf).sum
+    println("bid ask points inserted: " + pointsRowsAffected)
+
 
   }
 
