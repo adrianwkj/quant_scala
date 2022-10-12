@@ -3,6 +3,8 @@ package org.peter.quant
 import scala.language.postfixOps
 import slick.jdbc.PostgresProfile.api._
 
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Await
@@ -19,7 +21,15 @@ object Main {
 
   val circle = "Day"
 
-  val stocks = TableQuery[Stocks].filter(_.symbol === symbol)
+  val start_time_str = "2021-10-10"
+  val end_time_str = "2022-10-10"
+
+  //  val dateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss.SSS")
+  val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
+  val start_time = new Timestamp(dateFormat.parse(start_time_str).getTime)
+  val end_time = new Timestamp(dateFormat.parse(end_time_str).getTime)
+
+  val stocks = TableQuery[Stocks].filter(_.symbol === symbol).filter(x => x.trade_date >= start_time && x.trade_date <= end_time)
 
   val resultFuture = db.run(stocks.result)
 
@@ -110,19 +120,22 @@ object Main {
     strokeList.foreach(x => println(x + x.direction.toString))
 
     val strokes = TableQuery[Strokes]
+    val strokesDeleteAction = strokes.filter(_.symbol === symbol).filter(x => x.trade_date >= start_time && x.trade_date <= end_time).delete
     val toBeInsertedStrokes = strokeList.map {
       x => StrokeData(0, symbol, circle, x.startPoint.trade_datetime, x.startPoint.price)
     }.map {
       row => strokes.insertOrUpdate(row)
     }
-    val dbioFuture = db.run(DBIO.sequence(toBeInsertedStrokes.toSeq))
-    val rowsInserted = Await.result(dbioFuture, Duration.Inf).sum
-    println(rowsInserted)
+    val strokesInsertAction = DBIO.sequence(toBeInsertedStrokes.toSeq)
+    val strokesDbioFuture = db.run(strokesDeleteAction andThen (strokesInsertAction))
+    val strokesRowsAffected = Await.result(strokesDbioFuture, Duration.Inf).sum
+    println("strokes inserted: " + strokesRowsAffected)
 
     val mcList = identifyMC(strokeList.toList, List[MiddleCenter]())
 
     //    val mcList = firstMC(strokeList.toList)
     val middleCenters = TableQuery[MiddleCenters]
+    val mcDeleteAction = middleCenters.filter(_.symbol === symbol).filter(x => x.start_time >= start_time && x.end_time <= end_time).delete
     val toBeInsertedMCs = mcList.map {
       mc =>
         MCData(0, symbol, circle, mc.timeRange.startTime, mc.timeRange.endTime)
@@ -130,15 +143,29 @@ object Main {
       row => middleCenters.insertOrUpdate(row)
     }
 
-    val mcioFuture = db.run(DBIO.sequence(toBeInsertedMCs))
-    println(Await.result(mcioFuture, Duration.Inf).sum)
+    val mcInsertAction = DBIO.sequence(toBeInsertedMCs)
+    val mcDbioFuture = db.run(mcDeleteAction andThen (mcInsertAction))
+    val mcRowsAffected = Await.result(mcDbioFuture, Duration.Inf).sum
+    println("middle centers inserted: " + mcRowsAffected)
 
+    val bid = mcList.map {
+      mc =>
+        if (mc.extendStroke.isEmpty) {
+          val index = strokeList.indexOf(mc.third)
+          strokeList(index + 1).endPoint
+        } else {
+          val index = strokeList.indexOf(mc.extendStroke.last)
+          strokeList(index + 1).endPoint
+        }
+    }
+
+    bid.foreach(println)
 
   }
 
-//  def permute[T](xs: List[T], ys: List[T]) = {
-//    for {x <- xs; y <- ys} yield (x,y)
-//  }
+  //  def permute[T](xs: List[T], ys: List[T]) = {
+  //    for {x <- xs; y <- ys} yield (x,y)
+  //  }
 
 
   def identifyMC(strokeList: List[Stroke], mcList: List[MiddleCenter]): List[MiddleCenter] = {
