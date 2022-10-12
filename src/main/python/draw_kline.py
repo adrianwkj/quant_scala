@@ -26,6 +26,17 @@ if __name__ == '__main__':
     # points = list(map(lambda x: list(zip(points_trade_date, x)), points_price))
     points = list(zip(map(str, map(np.datetime_as_string, points_trade_date)), points_price))
 
+    mc_data = pd.read_sql(
+        "select start_time, end_time from middlecenter where symbol = '%s' and circle = '%s'" % (symbol, circle), conn
+    )
+    start_times = mc_data['start_time'].values
+    end_times = mc_data['end_time'].values
+    start_times_str = list(map(str, map(np.datetime_as_string, start_times)))
+    end_times_str = list(map(str, map(np.datetime_as_string, end_times)))
+    start_times_str.extend(end_times_str)
+    print(start_times_str)
+    # mcs = list(zip(map(str, map(np.datetime_as_string, start_times)), map(str, map(np.datetime_as_string, end_times))))
+
     # print(data.head)
 
     # 设置基本参数
@@ -84,8 +95,6 @@ if __name__ == '__main__':
     # 设置线宽
     mpl.rcParams['lines.linewidth'] = .5
 
-    two_points = [('2022-05-31', 8.5), ('2022-09-22', 9.5)]
-
     # 图形绘制
     # show_nontrading:是否显示非交易日，默认False
     # savefig:导出图片，填写文件名及后缀
@@ -97,7 +106,14 @@ if __name__ == '__main__':
                  linestyle=['-', '--'],
                  linewidths=[1, 2],
              ),
+             vlines=dict(
+                 vlines=start_times_str,
+                 alpha=0.4
+             ),
              style=s,
-             show_nontrading=False)
+             show_nontrading=False,
+             savefig='../../../dra.png')
+
+
 
     # mpf.show()

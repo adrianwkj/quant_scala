@@ -1,6 +1,7 @@
 package org.peter.quant
 
-import scala.collection.mutable.ListBuffer
+import java.sql.Timestamp
+import slick.jdbc.PostgresProfile.api._
 import scala.math._
 
 case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStroke: List[Stroke]) {
@@ -9,20 +10,21 @@ case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStro
 
   val middleRange = priceIntersection(first, second, third)
   val maxRange = priceDrift(first, second, third)
+  val timeRange = timeIntersection(first, third, extendStroke)
 }
 
 object MiddleCenter {
 
-  def priceIntersection(first: Stroke, second: Stroke, third: Stroke): Option[PriceRange] = {
+  private def priceIntersection(first: Stroke, second: Stroke, third: Stroke): Option[PriceRange] = {
     val firstRange = first.getPriceRange
     val secondRange = second.getPriceRange
     val thirdRange = third.getPriceRange
-    val firstRangesecond = rangeMerge(firstRange, secondRange)
-    if (firstRangesecond.isEmpty) None
-    else rangeMerge(firstRangesecond.get, thirdRange)
+    val firstRangeSecond = rangeMerge(firstRange, secondRange)
+    if (firstRangeSecond.isEmpty) None
+    else rangeMerge(firstRangeSecond.get, thirdRange)
   }
 
-  def priceDrift(first: Stroke, second: Stroke, third: Stroke): Option[PriceRange] = {
+  private def priceDrift(first: Stroke, second: Stroke, third: Stroke): Option[PriceRange] = {
     val firstRange = first.getPriceRange
     val secondRange = second.getPriceRange
     val thirdRange = third.getPriceRange
@@ -47,4 +49,33 @@ object MiddleCenter {
       Some(PriceRange(min(first.lowPrice, second.lowPrice), max(first.highPrice, second.highPrice)))
     } else None
   }
+
+  private def timeIntersection(first: Stroke, third: Stroke, extendStroke: List[Stroke]): TimeRange = {
+    val start_time = first.startPoint.trade_datetime
+    if (extendStroke.isEmpty) {
+      val end_time = third.endPoint.trade_datetime
+      TimeRange(start_time, end_time)
+    } else {
+      val end_time = extendStroke.last.endPoint.trade_datetime
+      TimeRange(start_time, end_time)
+    }
+  }
+}
+
+case class TimeRange(startTime: Timestamp, endTime: Timestamp)
+
+case class MCData(id: Int, symbol: String, circle: String, start_time: Timestamp, end_time: Timestamp)
+
+class MiddleCenters(tag: Tag) extends Table[MCData](tag, "middlecenter") {
+  def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
+
+  def symbol = column[String]("symbol")
+
+  def circle = column[String]("circle")
+
+  def start_time = column[Timestamp]("start_time")
+
+  def end_time = column[Timestamp]("end_time")
+
+  def * = (id, symbol, circle, start_time, end_time) <> ((MCData.apply _).tupled, MCData.unapply)
 }
