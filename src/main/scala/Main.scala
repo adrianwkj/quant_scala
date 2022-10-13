@@ -209,12 +209,24 @@ object Main {
           val tempMCList = mcList.dropRight(1).appended(newMC)
           identifyMC(strokeList.drop(1), tempMCList)
         } else {
+
           val mc = MiddleCenter(strokeList.head, strokeList(1), strokeList(2), List[Stroke]())
           val middleRange = mc.middleRange
 
           if (middleRange.isDefined) {
-            val newMCList = mcList.appended(mc)
-            identifyMC(strokeList.drop(3), newMCList)
+            mc.joinBefore(lastMC) match {
+              case (x, y) if x.isDefined && y.isDefined =>
+                val newMCList = mcList.appended(mc) // add a new mc
+                identifyMC(strokeList.drop(3), newMCList)
+              case (x, y) if x.isEmpty && y.isDefined =>
+                val newMCList = mcList.init.appended(mc) //drop the last mc and add the new one
+                identifyMC(strokeList.drop(3), newMCList)
+              case (x, y) if x.isDefined && y.isEmpty =>
+                identifyMC(strokeList.drop(1), mcList)
+              case (x, y) if x.isEmpty && y.isEmpty =>
+                identifyMC(strokeList.drop(1), List[MiddleCenter]())
+            }
+
           } else {
             identifyMC(strokeList.drop(2), mcList)
           }

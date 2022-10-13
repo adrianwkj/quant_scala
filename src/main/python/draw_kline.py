@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 if __name__ == '__main__':
     conn = create_engine('postgresql+psycopg2://postgres:postgrespw@localhost:55000/stock')
 
-    symbol = '601668'
+    symbol = '000729'
 
     circle = 'Day'
 

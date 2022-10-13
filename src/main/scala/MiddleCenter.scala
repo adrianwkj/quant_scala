@@ -11,6 +11,8 @@ case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStro
   val middleRange = priceIntersection(first, second, third)
   val maxRange = priceDrift(first, second, third)
   val timeRange = timeIntersection(first, third, extendStroke)
+
+  def joinBefore(mc: MiddleCenter) = join(mc, this)
 }
 
 object MiddleCenter {
@@ -58,6 +60,33 @@ object MiddleCenter {
     } else {
       val end_time = extendStroke.last.endPoint.trade_datetime
       TimeRange(start_time, end_time)
+    }
+  }
+
+  def join(before: MiddleCenter, after: MiddleCenter): (Option[MiddleCenter], Option[MiddleCenter]) = {
+    if(after.middleRange.get.mean > before.middleRange.get.mean) {
+      if(after.first.direction == down) {
+        if(before.first.direction == after.first.direction) {
+          (Some(before), Some(after))
+        } else {
+          (None, Some(after))
+        }
+      } else {
+        if(before.first.direction == down) (Some(before), None)
+        else (None, None)
+      }
+
+    } else {
+      if(after.first.direction == up) {
+        if(before.first.direction == after.first.direction) {
+          (Some(before), Some(after))
+        } else {
+          (None, Some(after))
+        }
+      } else {
+        if(before.first.direction == up) (Some(before), None)
+        else (None, None)
+      }
     }
   }
 }

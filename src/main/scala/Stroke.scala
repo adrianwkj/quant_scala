@@ -30,6 +30,8 @@ case class PriceRange(lowPrice: Float, highPrice: Float) {
     if(lowPrice <= pr.highPrice && highPrice >= pr.lowPrice) true
     else false
   }
+
+  def mean: Float = (lowPrice + highPrice)/2
 }
 
 object PriceRange {
