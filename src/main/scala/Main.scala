@@ -27,7 +27,10 @@ object Main {
   val start_time = new Timestamp(dateFormat.parse(start_time_str).getTime)
   val end_time = new Timestamp(dateFormat.parse(end_time_str).getTime)
 
-  val stocks = TableQuery[Stocks].filter(_.symbol === symbol).filter(x => x.trade_date >= start_time && x.trade_date <= end_time)
+  val stocks = TableQuery[Stocks]
+    .filter(_.symbol === symbol)
+    .filter(x => x.trade_date >= start_time && x.trade_date <= end_time)
+    .sortBy(_.id)
 
   val resultFuture = db.run(stocks.result)
 
@@ -36,6 +39,7 @@ object Main {
 
     import Stock._
     val raw = Await.result(resultFuture, Duration.Inf)
+    println(raw.length)
     val mergedRawData = raw.map(List(_)).reduce {
       (x, y) => {
         merge(x.last, y.last) match {
@@ -54,7 +58,7 @@ object Main {
       val after = mergedRawData(i + 1)
       val bc = compare(before, mergedRawData(i))
       val ac = compare(mergedRawData(i), after)
-      val tempShape: shape = (bc, ac) match {
+      val tempShape: org.peter.quant.shape = (bc, ac) match {
         case (`down`, `up`) => bottom
         case (`up`, `down`) => top
         case _ => relay

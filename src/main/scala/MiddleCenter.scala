@@ -2,9 +2,24 @@ package org.peter.quant
 
 import java.sql.Timestamp
 import slick.jdbc.PostgresProfile.api._
+
+import scala.collection.immutable.LinearSeq
 import scala.math._
 
-case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStroke: List[Stroke]) {
+sealed trait TrendElement {
+  type T <: TrendElement
+//  def add(t: T): T
+}
+
+case class SubLevelTrend[T >: TrendElement](stroke: Stroke*) extends TrendElement with LinearSeq[T] {
+
+//  type T = SubLevelTrend
+//  def add(s: SubLevelTrend): SubLevelTrend = {
+//    SubLevelTrend(strokeList ++ s.strokeList)
+//  }
+}
+
+case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStroke: List[Stroke]) extends TrendElement {
 
   import MiddleCenter._
 
@@ -13,6 +28,11 @@ case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStro
   val timeRange = timeIntersection(first, third, extendStroke)
 
   def joinBefore(mc: MiddleCenter) = join(mc, this)
+
+  type T = MiddleCenter
+
+  @deprecated
+  def add(mc: MiddleCenter): MiddleCenter = mc
 }
 
 object MiddleCenter {
