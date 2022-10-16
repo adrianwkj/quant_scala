@@ -8,15 +8,15 @@ import scala.math._
 
 sealed trait TrendElement {
   type T <: TrendElement
-//  def add(t: T): T
+  def add(t: T): T
 }
 
-case class SubLevelTrend[T >: TrendElement](stroke: Stroke*) extends TrendElement with LinearSeq[T] {
+case class SubLevelTrend(strokes: Stroke*) extends TrendElement {
 
-//  type T = SubLevelTrend
-//  def add(s: SubLevelTrend): SubLevelTrend = {
-//    SubLevelTrend(strokeList ++ s.strokeList)
-//  }
+  type T = SubLevelTrend
+  def add(s: SubLevelTrend): SubLevelTrend = {
+    SubLevelTrend(strokes ++ s.strokes:_*)
+  }
 }
 
 case class MiddleCenter(first: Stroke, second: Stroke, third: Stroke, extendStroke: List[Stroke]) extends TrendElement {

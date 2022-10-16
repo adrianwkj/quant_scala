@@ -255,5 +255,11 @@ object Main {
       None
     }
   }
+
+
+
+  def regenerateConsolidation(strokes: List[Stroke]) = {
+
+  }
 }
 
